@@ -1,0 +1,13 @@
+"Hello World" println
+3 2 - println
+$a printsp
+$a get println
+{} tostr println
+input tonum println
+True {3 2 + println} if
+$x get println
+$x get isundefined println
+$x 3 set
+$x get println
+$x get isundefined println
+printstack

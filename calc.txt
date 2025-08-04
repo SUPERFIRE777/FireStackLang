@@ -1,0 +1,8 @@
+$a 3 set
+$b 5 set
+
+$c
+    $a get $b get +
+set
+
+$c get println

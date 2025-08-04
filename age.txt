@@ -1,0 +1,6 @@
+"年齢: " print
+$age input tonum set
+
+$age get 18 >= dup 
+    {"成年" println} if
+    {"未成年" println} unless

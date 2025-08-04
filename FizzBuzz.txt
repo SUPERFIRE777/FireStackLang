@@ -1,0 +1,11 @@
+$i 1 100 1
+{$i get 15 % 0 == dup
+    {"FizzBuzz" println} if
+    {$i get 3 % 0 == dup
+        {"Fizz" println} if
+        {$i get 5 % 0 == dup 
+            {"Buzz" println} if
+            {$i get println} unless
+        } unless
+    } unless
+} for

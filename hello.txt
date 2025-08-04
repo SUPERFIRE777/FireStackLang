@@ -1,0 +1,9 @@
+"名前は？" printsp
+$name input set
+
+"こんにちは、" 
+$name get
+"さん！"
+concat concat
+
+println
