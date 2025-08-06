@@ -38,10 +38,6 @@ class Program:
     program: str
     tokens: list[Token]
 
-class Undefined:
-    def __repr__(self):
-        return "Undefined"
-
 class InvalidTokenException(Exception):
     def __init__(self, program: str, token: Token):
         line, pos, line_content = line_pos(program, token.span)
@@ -199,7 +195,18 @@ class NoSuchKeyException(Exception):
         )
         super().__init__(message)
 
-UNDEFINED = Undefined()
+class NoSuchVariableException(Exception):
+    def __init__(self, program: str, token: Token, var_name: str):
+        line, pos, line_content = line_pos(program, token.span)
+        content = token.content
+        message = (
+            f"[実行時エラー]\n"
+            f"変数${var_name}は存在しません。\n"
+            f"[発生箇所]\n"
+            f"{line}行目\n{line_content}\n" +
+            caret_tilda(line_content, pos, pos + len(content))
+        )
+        super().__init__(message)
 
 TOKEN_DICT = {
     "NUMBER": r"\d+(\.\d*)?",
@@ -351,6 +358,8 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
             variables[var.name] = value
         case "get":
             var, = pop_values(program, stack, (Variable,), token)
+            if var.name not in variables.keys():
+                raise NoSuchVariableException(program, token, var.name)
             stack.append(variables[var.name])
         case "dup":
             value, = pop_values(program, stack, (object,), token)
@@ -370,9 +379,6 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
                     run(prog.program, prog.tokens, stack, variables)
                 except Exception as e:
                     raise ErrorWhileRunningCodeException(program, token, e)
-        case "isundefined":
-            value, = pop_values(program, stack, (object, ), token)
-            stack.append(value is UNDEFINED)
         case "for":
             var, from_, to, step, prog = pop_values(program, stack, (Variable, float, float, float, Program), token)
             value = from_
@@ -474,7 +480,7 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
             raise NoSuchCommandException(program, token)
 
 
-def run(program: str, tokens: list[Token], stack: list = [], variables = defaultdict(lambda: UNDEFINED)):
+def run(program: str, tokens: list[Token], stack: list = [], variables = {}):
     for token in tokens:
         value = token.content
         match token.token_type:
