@@ -168,7 +168,7 @@ TOKEN_DICT = {
     "CODE": r"{.*?}",
     "BOOLEAN": r"True|False",
     "COMMAND": r"[a-z]+|[\+\-\*\/\%\#]|[><=!]=?",
-    "VARIABLE": r"\$[A-Za-z]+",
+    "VARIABLE": r"\$[A-Za-z][A-Za-z0-9_]*",
     "INVALID": r".*"
 }
 
@@ -307,6 +307,9 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
         case "set":
             var, value = pop_values(program, stack, (Variable, object), token)
             variables[var.name] = value
+        case "rset":
+            value, var = pop_values(program, stack, (object, Variable), token)
+            variables[var.name] = value
         case "get":
             var, = pop_values(program, stack, (Variable,), token)
             stack.append(variables[var.name])
@@ -341,6 +344,12 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
                 except Exception as e:
                     raise ErrorWhileRunningCodeException(program, token, e)
                 value += step
+        case "exec":
+            prog, = pop_values(program, stack, (Program, ), token)
+            try:
+                run(prog.program, prog.tokens, stack, variables)
+            except Exception as e:
+                raise ErrorWhileRunningCodeException(program, token, e)
         case _:
             raise NoSuchCommandException(program, token)
 

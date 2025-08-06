@@ -1,1 +1,21 @@
-True {True {1 0 /} if} if
+$mod_3 {
+    {"Fizz" println} if
+    {$i get 5 % 0 == dup 
+        {"Buzz" println} if
+        {$i get println} unless
+    } unless
+} set
+
+$mod_15 {
+    {"FizzBuzz" println} if
+    {$i get 3 % 0 == dup
+        $mod_3 get exec
+    } unless
+} set
+
+$fizzbuzz_one {$i get 15 % 0 == dup
+    $mod_15 get exec
+} set
+
+
+$i 1 100 1 $fizzbuzz_one get for
