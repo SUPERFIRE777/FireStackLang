@@ -48,7 +48,7 @@ class InvalidTokenException(Exception):
         content = token.content
         message = (
             f"[解析時エラー]\n"
-            f"無効なトークン「{content}」が見つかりました！\n"
+            f"無効なトークン「{content}」が見つかりました。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -61,7 +61,7 @@ class InvalidProgramException(Exception):
         content = token.content
         message = (
             f"[解析時エラー]\n"
-            f"{content}は無効なプログラムです！\n"
+            f"{content}は無効なプログラムです。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -74,7 +74,7 @@ class InvalidNumberException(Exception):
         line, pos, line_content = line_pos(program, token.span)
         message = (
             f"[実行時エラー]\n"
-            f"{value}は数値ではありません！\n"
+            f"{value}は数値ではありません。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(token.content))
@@ -87,7 +87,7 @@ class ErrorWhileRunningCodeException(Exception):
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"{content}に渡されたプログラムを実行中にエラーが発生しました！\n"
+            f"{content}に渡されたプログラムを実行中にエラーが発生しました。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -100,7 +100,7 @@ class NoSuchCommandException(Exception):
         content = token.content
         message = (
             f"[解析時エラー]\n"
-            f"コマンド「{content}」は存在しません！\n"
+            f"コマンド「{content}」は存在しません。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -128,7 +128,7 @@ class WrongTypeException(Exception):
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"{content}は{[i.__name__ for i in types]}を要求しますが、{[type(i).__name__ for i in stack[:len(types)]]}が渡されました！\n"
+            f"{content}は{[i.__name__ for i in types]}を要求しますが、{[type(i).__name__ for i in stack[:len(types)]]}が渡されました。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -141,7 +141,7 @@ class ZeroDivisionException(Exception):
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"0除算が発生しました！\n"
+            f"0除算が発生しました。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -153,10 +153,36 @@ class BraceNotEnoughException(Exception):
         line, pos, line_content = line_pos(program, span)
         message = (
             f"[解析時エラー]\n"
-            f"対応する括弧が見つかりません！\n"
+            f"対応する括弧が見つかりません。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, span[0], span[1])
+        )
+        super().__init__(message)
+
+class IndexNotPositiveIntegerException(Exception):
+    def __init__(self, program: str, token: Token):
+        line, pos, line_content = line_pos(program, token.span)
+        content = token.content
+        message = (
+            f"[実行時エラー]\n"
+            f"インデックスは正の整数である必要があります。\n"
+            f"[発生箇所]\n"
+            f"{line}行目\n{line_content}\n" +
+            caret_tilda(line_content, pos, pos + len(content))
+        )
+        super().__init__(message)
+
+class IndexOutOfRangeException(Exception):
+    def __init__(self, program: str, token: Token):
+        line, pos, line_content = line_pos(program, token.span)
+        content = token.content
+        message = (
+            f"[実行時エラー]\n"
+            f"インデックスがリストの範囲外です。\n"
+            f"[発生箇所]\n"
+            f"{line}行目\n{line_content}\n" +
+            caret_tilda(line_content, pos, pos + len(content))
         )
         super().__init__(message)
 
@@ -350,6 +376,62 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
                 run(prog.program, prog.tokens, stack, variables)
             except Exception as e:
                 raise ErrorWhileRunningCodeException(program, token, e)
+        case "emplist":
+            stack.append([])
+        case "seq":
+            from_, to, step = pop_values(program, stack, (float, float, float), token)
+            list_ = []
+            value = from_
+            while value <= to:
+                list_.append(value)
+                value += step
+            stack.append(list_)
+        case "put":
+            list_, value = pop_values(program, stack, (list, object), token)
+            stack.append(list_ + [value])
+        case "foreach":
+            var, list_, prog = pop_values(program, stack, (Variable, list, Program), token)
+            for value in list_:
+                variables[var.name] = value
+                try:
+                    run(prog.program, prog.tokens, stack, variables)
+                except Exception as e:
+                    raise ErrorWhileRunningCodeException(program, token, e)
+        case "len":
+            list_, = pop_values(program, stack, (list, ), token)
+            stack.append(float(len(list_)))
+        case "at":
+            list_, index = pop_values(program, stack, (list, float), token)
+            if index < 0 or index % 1 != 0:
+                raise IndexNotPositiveIntegerException(program, token)
+            if index >= len(list_):
+                raise IndexOutOfRangeException(program, token)
+            stack.append(list_[int(index)])
+        case "map":
+            list_, prog = pop_values(program, stack, (list, Program), token)
+            new_list = []
+            for value in list_:
+                try:
+                    stack.append(value)
+                    run(prog.program, prog.tokens, stack, variables)
+                    new_value = pop_values(program, stack, (object, ), token)[0]
+                    new_list.append(new_value)
+                except Exception as e:
+                    raise ErrorWhileRunningCodeException(program, token, e)
+            stack.append(new_list)
+        case "filter":
+            list_, prog = pop_values(program, stack, (list, Program), token)
+            new_list = []
+            for value in list_:
+                try:
+                    stack.append(value)
+                    run(prog.program, prog.tokens, stack, variables)
+                    cond = pop_values(program, stack, (bool, ), token)[0]
+                    if cond:
+                        new_list.append(value)
+                except Exception as e:
+                    raise ErrorWhileRunningCodeException(program, token, e)
+            stack.append(new_list)
         case _:
             raise NoSuchCommandException(program, token)
 

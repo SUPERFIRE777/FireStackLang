@@ -1,3 +1,18 @@
 {"Hello" print} exec
 $prog {"World" println} set
 $prog get exec
+
+$seq 1 5 1 seq set
+
+"seq is " $seq get tostr concat println
+"length is " $seq get len tostr concat println
+"seq[3] is " $seq get 3 at tostr concat println
+$i $seq get {$i get println} foreach
+
+$list
+    emplist 1 put 2 put 3 put
+set
+
+$list get println
+$list get {2 *} map println
+$list get {3 >=} filter println
