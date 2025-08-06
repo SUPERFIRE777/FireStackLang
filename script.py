@@ -413,13 +413,22 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
         case "len":
             list_, = pop_values(program, stack, (list, ), token)
             stack.append(float(len(list_)))
-        case "at":
+        case "getat":
             list_, index = pop_values(program, stack, (list, float), token)
             if index < 0 or index % 1 != 0:
                 raise IndexNotPositiveIntegerException(program, token)
             if index >= len(list_):
                 raise IndexOutOfRangeException(program, token)
             stack.append(list_[int(index)])
+        case "setat":
+            list_, index, value = pop_values(program, stack, (list, float, object), token)
+            if index < 0 or index % 1 != 0:
+                raise IndexNotPositiveIntegerException(program, token)
+            if index >= len(list_):
+                raise IndexOutOfRangeException(program, token)
+            new_list = list_[:]
+            new_list[int(index)] = value
+            stack.append(new_list)
         case "map":
             list_, prog = pop_values(program, stack, (list, Program), token)
             new_list = []

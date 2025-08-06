@@ -6,7 +6,7 @@ $seq 1 5 1 seq set
 
 "seq is " $seq get tostr concat println
 "length is " $seq get len tostr concat println
-"seq[3] is " $seq get 3 at tostr concat println
+"seq[3] is " $seq get 3 getat tostr concat println
 $i $seq get {$i get println} foreach
 
 $list
@@ -16,6 +16,11 @@ set
 $list get println
 $list get {2 *} map println
 $list get {3 >=} filter println
+$list
+    $list get 2 4 setat
+set
+$list get println
+$list get 2 getat println
 
 $dict
     empdict
@@ -27,3 +32,8 @@ $dict get println
 $dict get keys println
 $dict get values println
 $dict get "a" dicget println
+
+$dict
+    $dict get "c" 10 dicset
+set
+$dict get println
