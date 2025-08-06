@@ -501,7 +501,7 @@ def main():
     argv = sys.argv
     argc = len(argv)
     if argc != 2:
-        print(f"Usage: {__file__} ProgramName")
+        print(f"Usage: python {__file__} ProgramName")
         return
     file_name = sys.argv[1]
     with open(file_name, "r", encoding="UTF-8") as f:
