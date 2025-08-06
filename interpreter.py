@@ -1,4 +1,5 @@
 import re
+import os
 import sys
 import unicodedata
 from dataclasses import dataclass
@@ -507,9 +508,12 @@ def main():
     argv = sys.argv
     argc = len(argv)
     if argc != 2:
-        print(f"Usage: python {__file__} ProgramName")
+        print(f"使い方: python {__file__} ProgramName")
         return
     file_name = sys.argv[1]
+    if not os.path.isfile(file_name):
+        print(f"{file_name}は存在しません。")
+        return
     with open(file_name, "r", encoding="UTF-8") as f:
         program = f.read()
     tokens = tokenize(program)
