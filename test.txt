@@ -16,3 +16,14 @@ set
 $list get println
 $list get {2 *} map println
 $list get {3 >=} filter println
+
+$dict
+    empdict
+    "a" 5 dicset
+    "b" 8 dicset
+set
+
+$dict get println
+$dict get keys println
+$dict get values println
+$dict get "a" dicget println

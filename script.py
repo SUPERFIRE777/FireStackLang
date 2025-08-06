@@ -186,6 +186,19 @@ class IndexOutOfRangeException(Exception):
         )
         super().__init__(message)
 
+class NoSuchKeyException(Exception):
+    def __init__(self, program: str, token: Token):
+        line, pos, line_content = line_pos(program, token.span)
+        content = token.content
+        message = (
+            f"[実行時エラー]\n"
+            f"辞書に指定されたキーが存在しません。\n"
+            f"[発生箇所]\n"
+            f"{line}行目\n{line_content}\n" +
+            caret_tilda(line_content, pos, pos + len(content))
+        )
+        super().__init__(message)
+
 UNDEFINED = Undefined()
 
 TOKEN_DICT = {
@@ -432,6 +445,22 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
                 except Exception as e:
                     raise ErrorWhileRunningCodeException(program, token, e)
             stack.append(new_list)
+        case "empdict":
+            stack.append({})
+        case "dicset":
+            dict_, key, value = pop_values(program, stack, (dict, str, object), token)
+            stack.append(dict_ | {key: value})
+        case "dicget":
+            dict_, key = pop_values(program, stack, (dict, str), token)
+            if key not in dict_.keys():
+                raise NoSuchKeyException(program, token)
+            stack.append(dict_[key])
+        case "keys":
+            dict_, = pop_values(program, stack, (dict, ), token)
+            stack.append([*dict_.keys()])
+        case "values":
+            dict_, = pop_values(program, stack, (dict, ), token)
+            stack.append([*dict_.values()])
         case _:
             raise NoSuchCommandException(program, token)
 
