@@ -161,12 +161,12 @@ class BraceNotEnoughException(Exception):
         super().__init__(message)
 
 class IndexNotPositiveIntegerException(Exception):
-    def __init__(self, program: str, token: Token):
+    def __init__(self, program: str, token: Token, index: float):
         line, pos, line_content = line_pos(program, token.span)
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"インデックスは正の整数である必要があります。\n"
+            f"インデックスは正の整数である必要がありますが、{index}が渡されました。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -174,12 +174,12 @@ class IndexNotPositiveIntegerException(Exception):
         super().__init__(message)
 
 class IndexOutOfRangeException(Exception):
-    def __init__(self, program: str, token: Token):
+    def __init__(self, program: str, token: Token, list_length: int, index: float):
         line, pos, line_content = line_pos(program, token.span)
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"インデックスがリストの範囲外です。\n"
+            f"長さ{list_length}のリストに対して、インデックス{index}は範囲外です。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -187,12 +187,12 @@ class IndexOutOfRangeException(Exception):
         super().__init__(message)
 
 class NoSuchKeyException(Exception):
-    def __init__(self, program: str, token: Token):
+    def __init__(self, program: str, token: Token, key: str):
         line, pos, line_content = line_pos(program, token.span)
         content = token.content
         message = (
             f"[実行時エラー]\n"
-            f"辞書に指定されたキーが存在しません。\n"
+            f"渡された辞書に指定されたキー{key}は存在しません。\n"
             f"[発生箇所]\n"
             f"{line}行目\n{line_content}\n" +
             caret_tilda(line_content, pos, pos + len(content))
@@ -416,16 +416,16 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
         case "getat":
             list_, index = pop_values(program, stack, (list, float), token)
             if index < 0 or index % 1 != 0:
-                raise IndexNotPositiveIntegerException(program, token)
+                raise IndexNotPositiveIntegerException(program, token, index)
             if index >= len(list_):
-                raise IndexOutOfRangeException(program, token)
+                raise IndexOutOfRangeException(program, token, len(list_), index)
             stack.append(list_[int(index)])
         case "setat":
             list_, index, value = pop_values(program, stack, (list, float, object), token)
             if index < 0 or index % 1 != 0:
                 raise IndexNotPositiveIntegerException(program, token)
             if index >= len(list_):
-                raise IndexOutOfRangeException(program, token)
+                raise IndexOutOfRangeException(program, token, len(list_), index)
             new_list = list_[:]
             new_list[int(index)] = value
             stack.append(new_list)
@@ -462,7 +462,7 @@ def run_command_token(program: str, stack: list, variables: dict, token: Token):
         case "dicget":
             dict_, key = pop_values(program, stack, (dict, str), token)
             if key not in dict_.keys():
-                raise NoSuchKeyException(program, token)
+                raise NoSuchKeyException(program, token, key)
             stack.append(dict_[key])
         case "keys":
             dict_, = pop_values(program, stack, (dict, ), token)
